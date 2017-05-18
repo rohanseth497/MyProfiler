@@ -1,9 +1,9 @@
 package zorail.rohan.com.myprofiler.photodetail;
 
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import zorail.rohan.com.myprofiler.ActivityUtils;
@@ -30,7 +30,7 @@ public class PhotoDetailActivity extends AppCompatActivity {
             startPhotoGalleryActivity();
         }
 
-        manager = this.getSupportFragmentManager();
+        manager = this.getFragmentManager();
 
         //set up fragment
         PhotoDetailFragment fragment = (PhotoDetailFragment)

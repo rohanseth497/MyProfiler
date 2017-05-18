@@ -24,6 +24,10 @@ import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeEmitter;
 import io.reactivex.MaybeOnSubscribe;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
+import zorail.rohan.com.myprofiler.data.User;
 
 
 /**
@@ -184,6 +188,28 @@ public class FirebaseDatabaseService implements DataBaseSource {
             }
         });
 
+    }
+
+    @Override
+    public Single<Uri> downloadUrl(final User user) {
+        return Single.create(new SingleOnSubscribe<Uri>() {
+            @Override
+            public void subscribe(@io.reactivex.annotations.NonNull final SingleEmitter<Uri> e) throws Exception {
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference storageReference = storage.getReferenceFromUrl("gs://myprofiler-75995.appspot.com").child(user.getUserId());
+                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        e.onSuccess(uri);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception f) {
+                        e.onError(f);
+                    }
+                });
+            }
+        });
     }
 
 

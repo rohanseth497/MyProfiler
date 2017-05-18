@@ -1,11 +1,11 @@
 package zorail.rohan.com.myprofiler.photogallery;
 
 import android.Manifest;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
@@ -28,7 +28,7 @@ public class PhotoGalleryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_gallery);
 
-        manager = this.getSupportFragmentManager();
+        manager = this.getFragmentManager();
 
         ActivityCompat.requestPermissions(PhotoGalleryActivity.this,
                 new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},

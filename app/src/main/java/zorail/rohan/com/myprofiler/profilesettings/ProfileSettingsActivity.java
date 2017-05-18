@@ -1,9 +1,9 @@
 package zorail.rohan.com.myprofiler.profilesettings;
 
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -29,7 +29,7 @@ public class ProfileSettingsActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle(R.string.activity_settings);
 
-        manager = getSupportFragmentManager();
+        manager = getFragmentManager();
 
         ProfileSettingsFragment fragment = (ProfileSettingsFragment) manager.findFragmentByTag(SETTINGS_FRAGMENT);
 

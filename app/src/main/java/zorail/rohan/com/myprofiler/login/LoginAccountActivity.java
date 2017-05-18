@@ -1,7 +1,7 @@
 package zorail.rohan.com.myprofiler.login;
 
+import android.app.FragmentManager;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import zorail.rohan.com.myprofiler.ActivityUtils;
@@ -21,7 +21,7 @@ public class LoginAccountActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        fragmentManager = getSupportFragmentManager();
+        fragmentManager = getFragmentManager();
 
         LoginAccountFragment fragment = (LoginAccountFragment)
                 fragmentManager.findFragmentByTag(LOGIN_FRAGMENT);

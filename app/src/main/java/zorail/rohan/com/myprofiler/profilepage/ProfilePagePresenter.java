@@ -1,8 +1,12 @@
 package zorail.rohan.com.myprofiler.profilepage;
 
+import android.net.Uri;
+
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
+import io.reactivex.observers.DisposableSingleObserver;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.AuthSource;
@@ -155,5 +159,22 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
                 })
         );
 
+    }
+    private void setImage()
+    {
+        disposable.add(database.downloadUrl(currentUser)
+                               .subscribeOn(schedulerProvider.io())
+                               .observeOn(schedulerProvider.ui())
+                               .subscribeWith(new DisposableSingleObserver<Uri>() {
+                                   @Override
+                                   public void onSuccess(@NonNull Uri uri) {
+                                       view.setProfilePhotoURL(uri.toString());
+                                   }
+
+                                   @Override
+                                   public void onError(@NonNull Throwable e) {
+                                       view.makeToast(e.getMessage());
+                                   }
+                               }));
     }
 }

@@ -1,7 +1,7 @@
 package zorail.rohan.com.myprofiler.profiledetail;
 
+import android.app.FragmentManager;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import zorail.rohan.com.myprofiler.ActivityUtils;
@@ -22,7 +22,7 @@ public class ProfileDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_detail);
 
-        manager = this.getSupportFragmentManager();
+        manager = this.getFragmentManager();
 
         ProfileDetailFragment fragment = (ProfileDetailFragment) manager.findFragmentByTag(DETAIL_FRAGMENT);
 
