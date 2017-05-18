@@ -141,7 +141,7 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
                         if (photoURL.equals("")){
                             view.setDefaultProfilePhoto();
                         } else {
-                            view.setProfilePhotoURL(profile.getPhotoURL());
+                            provideUrl();
                         }
 
                     }
@@ -160,7 +160,7 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
         );
 
     }
-    private void setImage()
+    private void provideUrl()
     {
         disposable.add(database.downloadUrl(currentUser)
                                .subscribeOn(schedulerProvider.io())
