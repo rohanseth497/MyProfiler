@@ -30,6 +30,7 @@ public class LoginAccountActivity extends AppCompatActivity {
             fragment = LoginAccountFragment.newInstance();
         }
 
+
         ActivityUtils.addFragmentToActivity(fragmentManager,
                 fragment,
                 R.id.root_login_activity,

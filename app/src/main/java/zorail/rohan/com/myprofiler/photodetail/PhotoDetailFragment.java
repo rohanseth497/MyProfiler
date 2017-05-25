@@ -16,6 +16,9 @@ import android.widget.Toast;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
@@ -30,8 +33,8 @@ import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
 public class PhotoDetailFragment extends Fragment implements PhotoDetailContract.View {
 
     private static final String PHOTO_URL = "PHOTO_URL";
-
-    private PhotoDetailContract.Presenter presenter;
+    @Inject
+    PhotoDetailPresenter presenter;
     private ImageButton back, done;
     private ImageView photo;
     private ProgressBar progressBar;
@@ -56,6 +59,15 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
         if (getArguments() != null){
             this.photoURL = getArguments().getString(PHOTO_URL);
         }
+        DaggerPhotoDetailComponent.builder().netComponent(((MyApp)getActivity().getApplication()).getComponent())
+                .photoDetailModule(new PhotoDetailModule(this))
+                .build().inject(this);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        presenter.subscribe();
     }
 
     @Nullable
@@ -85,13 +97,13 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
         return v;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new PhotoDetailPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
-        presenter.subscribe();
-    }
+//    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new PhotoDetailPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
+//        presenter.subscribe();
+//    }
 
     @Override
     public void makeToast(String message) {
@@ -136,7 +148,7 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
 
     @Override
     public void setPresenter(PhotoDetailContract.Presenter presenter) {
-        this.presenter = presenter;
+        this.presenter = (PhotoDetailPresenter) presenter;
     }
 
     @Override

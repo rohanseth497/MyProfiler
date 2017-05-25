@@ -1,5 +1,7 @@
 package zorail.rohan.com.myprofiler.profiledetail;
 
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
@@ -22,6 +24,7 @@ public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
     private CompositeDisposable disposable;
     private SchedulerProvider schedulerProvider;
     private Profile currentProfile;
+    @Inject
     public ProfileDetailPresenter(AuthSource auth,DataBaseSource database,ProfileDetailContract.View view,SchedulerProvider schedulerProvider){
 
         this.auth = auth;

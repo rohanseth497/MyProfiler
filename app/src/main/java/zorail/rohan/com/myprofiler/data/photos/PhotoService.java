@@ -25,7 +25,7 @@ public class PhotoService implements PhotoSource {
 
     }
 
-    public static PhotoService getInstance() {
+    public static PhotoSource getInstance() {
         return new PhotoService();
     }
 

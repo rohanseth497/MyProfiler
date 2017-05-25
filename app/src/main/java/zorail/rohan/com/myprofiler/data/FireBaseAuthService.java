@@ -29,7 +29,7 @@ public class FireBaseAuthService implements AuthSource {
         auth = FirebaseAuth.getInstance();
     }
 
-    public static FireBaseAuthService getInstance() {
+    public static AuthSource getInstance() {
         return new FireBaseAuthService();
     }
 

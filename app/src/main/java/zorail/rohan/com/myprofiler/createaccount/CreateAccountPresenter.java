@@ -1,6 +1,8 @@
 package zorail.rohan.com.myprofiler.createaccount;
 
 
+import javax.inject.Inject;
+
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
@@ -23,15 +25,15 @@ public class CreateAccountPresenter implements CreateAccountContract.Presenter {
     CompositeDisposable disposable;
     AuthSource auth;
     SchedulerProvider schedulerProvider;
-    private DataBaseSource database;
-
-    public CreateAccountPresenter(CreateAccountContract.View view,DataBaseSource database,AuthSource auth,SchedulerProvider schedulerProvider)
+    DataBaseSource database;
+    @Inject
+    public CreateAccountPresenter(CreateAccountContract.View view,DataBaseSource database,AuthSource auth,SchedulerProvider schedulerProvider,CompositeDisposable disposable)
     {
         this.schedulerProvider = schedulerProvider;
         this.auth = auth;
         this.view = view;
         this.database = database;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
         view.setPresenter(this);
     }
 

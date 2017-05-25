@@ -1,5 +1,7 @@
 package zorail.rohan.com.myprofiler.photodetail;
 
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
@@ -22,13 +24,13 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
     private DataBaseSource database;
     private CompositeDisposable disposable;
     private Profile currentProfile;
-
-    public PhotoDetailPresenter(AuthSource auth, DataBaseSource database, PhotoDetailContract.View view, SchedulerProvider schedulerProvider)
+    @Inject
+    public PhotoDetailPresenter(AuthSource auth, DataBaseSource database, PhotoDetailContract.View view, SchedulerProvider schedulerProvider,CompositeDisposable disposable)
     {
         this.auth = auth;
         this.view = view;
         this.database = database;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
         this.schedulerProvider = schedulerProvider;
         view.setPresenter(this);
     }
@@ -58,7 +60,6 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
                 .subscribeWith(new DisposableCompletableObserver() {
                     @Override
                     public void onComplete() {
-                        view.makeToast("Image Uploaded");
                         updateProfile();
                     }
 

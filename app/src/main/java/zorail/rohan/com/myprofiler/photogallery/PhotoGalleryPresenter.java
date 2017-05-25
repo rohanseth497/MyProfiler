@@ -4,6 +4,8 @@ import android.content.ContentResolver;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableMaybeObserver;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
@@ -22,14 +24,14 @@ public class PhotoGalleryPresenter implements PhotoGalleryContract.Presenter {
     private List<Photo> photos;
     private CompositeDisposable disposable;
     private ContentResolver resolver;
-
-    public PhotoGalleryPresenter(ContentResolver resolver,PhotoSource photoSource,PhotoGalleryContract.View view,SchedulerProvider schedulerProvider)
+    @Inject
+    public PhotoGalleryPresenter(ContentResolver resolver,PhotoSource photoSource,PhotoGalleryContract.View view,SchedulerProvider schedulerProvider,CompositeDisposable disposable)
     {
         this.schedulerProvider = schedulerProvider;
         this.photoSource = photoSource;
         this.view = view;
         this.resolver = resolver;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
         view.setPresenter(this);
     }
 

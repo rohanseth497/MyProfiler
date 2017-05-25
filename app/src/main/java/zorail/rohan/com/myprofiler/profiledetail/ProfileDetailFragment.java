@@ -12,6 +12,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
@@ -26,17 +29,10 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
 
     private EditText bioInput, interestsInput;
     private ImageButton back, done;
-    private ProfileDetailContract.Presenter presenter;
+    @Inject
+    ProfileDetailPresenter presenter;
 
     public ProfileDetailFragment(){
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new ProfileDetailPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
-        presenter.subscribe();
     }
 
     public static ProfileDetailFragment newInstance(){return new ProfileDetailFragment();}
@@ -45,6 +41,17 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
+        DaggerProfileDetailComponent.builder()
+                .netComponent(((MyApp)getActivity().getApplication()).getComponent())
+                .profileDetailModule(new ProfileDetailModule(this))
+                .build()
+                .inject(this);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        presenter.subscribe();
     }
 
     @Nullable
@@ -107,7 +114,7 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
 
     @Override
     public void setPresenter(ProfileDetailContract.Presenter presenter) {
-        this.presenter = presenter;
+        this.presenter =(ProfileDetailPresenter) presenter;
     }
 
     @Override

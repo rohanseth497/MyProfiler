@@ -16,10 +16,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
-import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
-import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
-import zorail.rohan.com.myprofiler.data.database.FirebaseDatabaseService;
 import zorail.rohan.com.myprofiler.login.LoginAccountActivity;
 
 /**
@@ -28,7 +28,8 @@ import zorail.rohan.com.myprofiler.login.LoginAccountActivity;
 
 public class ProfileSettingsFragment extends Fragment implements ProfileSettingsContract.View {
 
-    private ProfileSettingsContract.Presenter presenter;
+    @Inject
+    ProfileSettingsPresenter presenter;
     private Button deleteAccount;
     private ProgressBar progressBar;
     private EditText passwordInput;
@@ -40,23 +41,29 @@ public class ProfileSettingsFragment extends Fragment implements ProfileSettings
     }
 
     public static ProfileSettingsFragment newInstance() {
-        ProfileSettingsFragment fragment = new ProfileSettingsFragment();
-        return fragment;
+       return new ProfileSettingsFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
+        ProfileSettingsComponent.Builder builder = (ProfileSettingsComponent.Builder)((MyApp)getActivity().getApplication()).getComponent().subcomponentBuilders().get(ProfileSettingsComponent.Builder.class).get();
+        builder.profileSettingsModule(new ProfileSettingsModule(this)).build().inject(this);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new ProfileSettingsPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
         presenter.subscribe();
     }
+    //    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new ProfileSettingsPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
+//        presenter.subscribe();
+//    }
 
     @Nullable
     @Override
@@ -100,7 +107,7 @@ public class ProfileSettingsFragment extends Fragment implements ProfileSettings
 
     @Override
     public void setPresenter(ProfileSettingsContract.Presenter presenter) {
-        this.presenter  = presenter;
+        this.presenter  = (ProfileSettingsPresenter) presenter;
     }
 
     @Override

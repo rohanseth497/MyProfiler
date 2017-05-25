@@ -2,6 +2,10 @@ package zorail.rohan.com.myprofiler.profilepage;
 
 import android.net.Uri;
 
+import java.io.File;
+
+import javax.inject.Inject;
+
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
@@ -24,9 +28,9 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
     ProfilePageContract.View view;
     SchedulerProvider schedulerProvider;
     CompositeDisposable disposable;
-    private DataBaseSource database;
+    DataBaseSource database;
     User currentUser;
-
+    @Inject
     public ProfilePagePresenter(AuthSource auth,ProfilePageContract.View view,SchedulerProvider schedulerProvider,DataBaseSource database)
     {
         this.database = database;
@@ -137,13 +141,17 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
                         view.setEmail(profile.getEmail());
 
                         view.setDetailLoadingIndicators(false);
-                        String photoURL = profile.getPhotoURL();
-                        if (photoURL.equals("")){
+                        String sub = profile.getPhotoURL().replace("file://","");
+                        if (profile.getPhotoURL().equals("")){
                             view.setDefaultProfilePhoto();
-                        } else {
+                        }
+                        else if(new File(sub).isFile())
+                        {
+                            view.setProfilePhotoURL(profile.getPhotoURL());}
+                        else
+                        {
                             provideUrl();
                         }
-
                     }
 
                     @Override

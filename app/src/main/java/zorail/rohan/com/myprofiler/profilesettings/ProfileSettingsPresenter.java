@@ -1,6 +1,8 @@
 package zorail.rohan.com.myprofiler.profilesettings;
 
 
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
@@ -22,15 +24,14 @@ public class ProfileSettingsPresenter implements ProfileSettingsContract.Present
     DataBaseSource database;
     SchedulerProvider schedulerProvider;
     private String uid;
-
-
-    public ProfileSettingsPresenter(AuthSource auth, DataBaseSource database, ProfileSettingsContract.View view, SchedulerProvider schedulerProvider)
+    @Inject
+    public ProfileSettingsPresenter(AuthSource auth, DataBaseSource database, ProfileSettingsContract.View view, SchedulerProvider schedulerProvider,CompositeDisposable disposable)
     {
         this.auth = auth;
         this.database = database;
         this.schedulerProvider = schedulerProvider;
         this.view = view;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
         view.setPresenter(this);
     }
     @Override

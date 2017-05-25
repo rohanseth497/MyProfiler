@@ -16,6 +16,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
@@ -35,9 +38,19 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
     private ProgressBar progressBar;
     private View contentContainer;
 
-    private CreateAccountContract.Presenter presenter;
+    @Inject
+    CreateAccountPresenter presenter;
 
     public CreateAccountFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        DaggerCreateAccountComponent.builder()
+                .netComponent(((MyApp)getActivity().getApplication()).getComponent())
+                .createAccountModule(new CreateAccountModule(this))
+                .build().inject(this);
     }
 
     @Nullable
@@ -75,12 +88,12 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
         return new CreateAccountFragment();
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new CreateAccountPresenter(this, FirebaseDatabaseService.getInstance(),FireBaseAuthService.getInstance(), SchedulerProvider.getInstance());
-    }
+//    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new CreateAccountPresenter(this, FirebaseDatabaseService.getInstance(),FireBaseAuthService.getInstance(), SchedulerProvider.getInstance());
+//    }
 
     @Override
     public void makeToast(String message) {
@@ -126,7 +139,7 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
 
     @Override
     public void setPresenter(CreateAccountContract.Presenter presenter) {
-        this.presenter = presenter;
+        this.presenter = (CreateAccountPresenter)presenter;
     }
 
     @Override

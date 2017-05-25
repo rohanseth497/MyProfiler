@@ -15,6 +15,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import javax.inject.Inject;
+
+
+import io.reactivex.disposables.CompositeDisposable;
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.createaccount.CreateAccountActivity;
@@ -32,12 +38,21 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
     private EditText emailInput, passwordInput;
     private ProgressBar progressBar;
     private View contentContainer;
-
-    private LoginAccountContract.Presenter presenter;
+    @Inject
+    LoginAccountPresenter presenter;
 
     public LoginAccountFragment(){}
 
     public static LoginAccountFragment newInstance(){ return new LoginAccountFragment();}
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        DaggerLoginComponent.builder()
+                .netComponent(((MyApp)getActivity().getApplication()).getComponent())
+                .loginModule(new LoginModule(this))
+                .build().inject(this);
+    }
 
     @Nullable
     @Override
@@ -75,12 +90,12 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
         return v;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new LoginAccountPresenter(this, FireBaseAuthService.getInstance(), SchedulerProvider.getInstance());
-    }
+//    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new LoginAccountPresenter(view,FireBaseAuthService.getInstance(),SchedulerProvider.getInstance());
+//    }
 
     public void setUpListeners() {
         emailInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -115,6 +130,11 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
     }
 
     @Override
+    public void setPresenter(LoginAccountContract.Presenter presenter) {
+        this.presenter =(LoginAccountPresenter) presenter;
+    }
+
+    @Override
     public void makeToast(@StringRes int stringId) {
         Toast.makeText(getActivity().getApplicationContext(), getString(stringId), Toast.LENGTH_SHORT).show();
     }
@@ -146,10 +166,6 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
         startActivity(i);
     }
 
-    @Override
-    public void setPresenter(LoginAccountContract.Presenter presenter) {
-        this.presenter = presenter;
-    }
 
     @Override
     public void showProgressIndicator(boolean show) {

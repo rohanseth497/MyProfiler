@@ -1,5 +1,8 @@
 package zorail.rohan.com.myprofiler.login;
 
+
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import zorail.rohan.com.myprofiler.R;
@@ -17,11 +20,12 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
     CompositeDisposable disposable;
     AuthSource auth;
     SchedulerProvider schedulerProvider;
-    public LoginAccountPresenter(LoginAccountContract.View view,AuthSource auth,SchedulerProvider schedulerProvider){
+    @Inject
+    public LoginAccountPresenter(LoginAccountContract.View view,AuthSource auth,SchedulerProvider schedulerProvider,CompositeDisposable disposable){
         this.view = view;
         this.schedulerProvider = schedulerProvider;
         this.auth = auth;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
         view.setPresenter(this);
     }
     @Override
@@ -44,6 +48,7 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
     public void onCreateClick() {
         view.startCreateAccountActivity();
     }
+
 
     private void validateCredetials(String email,String password){
         if (email.isEmpty()) {

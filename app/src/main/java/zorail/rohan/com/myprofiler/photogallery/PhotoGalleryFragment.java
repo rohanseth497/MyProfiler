@@ -22,11 +22,13 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
-import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.photos.Photo;
-import zorail.rohan.com.myprofiler.data.photos.PhotoService;
 import zorail.rohan.com.myprofiler.photodetail.PhotoDetailActivity;
+import zorail.rohan.com.myprofiler.photodetail.PhotoDetailComponent;
 import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
 
 
@@ -37,7 +39,8 @@ import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
 public class PhotoGalleryFragment extends Fragment implements PhotoGalleryContract.View {
 
     private static final String EXTRA_PHOTO_URL = "EXTRA_PHOTO_URL";
-    private PhotoGalleryContract.Presenter presenter;
+    @Inject
+    PhotoGalleryPresenter presenter;
     private GalleryAdapter adapter;
     private RecyclerView photoGallery;
     private TextView noData;
@@ -49,11 +52,18 @@ public class PhotoGalleryFragment extends Fragment implements PhotoGalleryContra
 
     public static PhotoGalleryFragment newInstance(){return new PhotoGalleryFragment();}
 
+//    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new PhotoGalleryPresenter(getActivity().getContentResolver(), PhotoService.getInstance(),this, SchedulerProvider.getInstance());
+//        presenter.subscribe();
+//    }
+
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new PhotoGalleryPresenter(getActivity().getContentResolver(), PhotoService.getInstance(),this, SchedulerProvider.getInstance());
         presenter.subscribe();
     }
 
@@ -61,6 +71,8 @@ public class PhotoGalleryFragment extends Fragment implements PhotoGalleryContra
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
+        PhotoGalleryComponent.Builder builder = (PhotoGalleryComponent.Builder)((MyApp)getActivity().getApplication()).getComponent().subcomponentBuilders().get(PhotoGalleryComponent.Builder.class).get();
+        builder.photoGalleryModule(new PhotoGalleryModule(this,getActivity().getContentResolver())).build().inject(this);
     }
 
     @Nullable
@@ -115,7 +127,7 @@ public class PhotoGalleryFragment extends Fragment implements PhotoGalleryContra
 
     @Override
     public void setPresenter(PhotoGalleryContract.Presenter presenter) {
-        this.presenter = presenter;
+        this.presenter =(PhotoGalleryPresenter) presenter;
     }
 
     @Override

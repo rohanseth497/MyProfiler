@@ -20,6 +20,9 @@ import android.widget.Toast;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import javax.inject.Inject;
+
+import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
@@ -35,7 +38,8 @@ import zorail.rohan.com.myprofiler.profilesettings.ProfileSettingsActivity;
 
 public class ProfilePageFragment extends Fragment implements ProfilePageContract.View {
 
-    private ProfilePageContract.Presenter presenter;
+    @Inject
+    ProfilePagePresenter presenter;
 
     private TextView userBio, userInterests, userName, userEmail;
     private ImageView thumbnail;
@@ -44,7 +48,15 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
     private ProgressBar avatarProgress, bioProgress, interestsProgress;
 
     public ProfilePageFragment(){
+    }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        DaggerProfilePageComponent.builder().netComponent(((MyApp)getActivity().getApplication()).getComponent())
+                .profilePageModule(new ProfilePageModule(this))
+                .build()
+                .inject(this);
     }
 
     @Nullable
@@ -95,12 +107,12 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
         return v;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if(presenter==null)
-            presenter = new ProfilePagePresenter(FireBaseAuthService.getInstance(),this, SchedulerProvider.getInstance(), FirebaseDatabaseService.getInstance());
-    }
+//    @Override
+//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+//        super.onActivityCreated(savedInstanceState);
+//        if(presenter==null)
+//            presenter = new ProfilePagePresenter(FireBaseAuthService.getInstance(),this, SchedulerProvider.getInstance(), FirebaseDatabaseService.getInstance());
+//    }
 
     public static ProfilePageFragment newInstance(){return new ProfilePageFragment();}
 
@@ -120,7 +132,7 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
 
     @Override
     public void setPresenter(ProfilePageContract.Presenter presenter) {
-       this.presenter = presenter;
+       this.presenter = (ProfilePagePresenter) presenter;
     }
 
     @Override
@@ -262,15 +274,16 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
             userInterests.setVisibility(View.VISIBLE);
         }
     }
+
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         presenter.subscribe();
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onDestroy() {
+        super.onDestroy();
         presenter.unsubscribe();
     }
 }
