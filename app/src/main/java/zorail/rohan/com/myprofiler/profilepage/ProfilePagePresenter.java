@@ -1,6 +1,6 @@
 package zorail.rohan.com.myprofiler.profilepage;
 
-import android.net.Uri;
+import android.content.Context;
 
 import java.io.File;
 
@@ -10,9 +10,11 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
-import io.reactivex.observers.DisposableSingleObserver;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
+import zorail.rohan.com.myprofiler.Util.SessionManager;
 import zorail.rohan.com.myprofiler.data.AuthSource;
 import zorail.rohan.com.myprofiler.data.User;
 import zorail.rohan.com.myprofiler.data.database.DataBaseSource;
@@ -30,14 +32,20 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
     CompositeDisposable disposable;
     DataBaseSource database;
     User currentUser;
+    SessionManager sessionManager;
+    Realm realm;
+    RealmConfiguration realmConfiguration;
+    Context context;
     @Inject
-    public ProfilePagePresenter(AuthSource auth,ProfilePageContract.View view,SchedulerProvider schedulerProvider,DataBaseSource database)
+    public ProfilePagePresenter(AuthSource auth,ProfilePageContract.View view,SchedulerProvider schedulerProvider,DataBaseSource database,Context context,CompositeDisposable disposable)
     {
         this.database = database;
         this.auth = auth;
         this.view = view;
         this.schedulerProvider = schedulerProvider;
-        disposable = new CompositeDisposable();
+        this.disposable = disposable;
+        this.context = context;
+        sessionManager = new SessionManager(context);
         view.setPresenter(this);
     }
 
@@ -48,7 +56,7 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
 
     @Override
     public void unsubscribe() {
-     disposable.clear();
+        disposable.clear();
     }
 
     @Override
@@ -76,6 +84,9 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
                         .subscribeWith(new DisposableCompletableObserver() {
                             @Override
                             public void onComplete() {
+                                sessionManager.setLogin(false);
+                                realm.close();
+                                Realm.deleteRealm(realmConfiguration);
                                 view.startLoginActivity();
                             }
 
@@ -98,6 +109,7 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
 
     }
     private void getUserData() {
+
         view.setThumbnailLoadingIndicator(true);
         view.setDetailLoadingIndicators(true);
         disposable.add(
@@ -129,43 +141,61 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
     }
 
     private void getUserProfileFromDatabase() {
-        disposable.add(database.getProfile(currentUser.getUserId())
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<Profile>() {
-                    @Override
-                    public void onSuccess(Profile profile) {
-                        view.setBio(profile.getBio());
-                        view.setInterests(profile.getInterests());
-                        view.setName(profile.getName());
-                        view.setEmail(profile.getEmail());
+        if(!realm.isEmpty())
+        {
+            view.setDetailLoadingIndicators(false);
+            Profile profile = realm.where(Profile.class).equalTo("uid",currentUser.getUserId()).findAll().last();
+            view.setBio(profile.getBio());
+            view.setInterests(profile.getInterests());
+            view.setName(profile.getName());
+            view.setEmail(profile.getEmail());
+            String sub = profile.getPhotoURL().replace("file://", "");
+            if (profile.getPhotoURL().equals("")) {
+                view.setDefaultProfilePhoto();
+            } else if (new File(sub).isFile()) {
+                view.setProfilePhotoURL(profile.getPhotoURL());
+            }
+        }
+        else {
+            disposable.add(database.getProfile(currentUser.getUserId())
+                    .subscribeOn(schedulerProvider.io())
+                    .observeOn(schedulerProvider.ui())
+                    .subscribeWith(new DisposableMaybeObserver<Profile>() {
+                        @Override
+                        public void onSuccess(Profile profile) {
+                            view.setBio(profile.getBio());
+                            view.setInterests(profile.getInterests());
+                            view.setName(profile.getName());
+                            view.setEmail(profile.getEmail());
 
-                        view.setDetailLoadingIndicators(false);
-                        String sub = profile.getPhotoURL().replace("file://","");
-                        if (profile.getPhotoURL().equals("")){
-                            view.setDefaultProfilePhoto();
+                            view.setDetailLoadingIndicators(false);
+                            String sub = profile.getPhotoURL().replace("file://", "");
+                            if (profile.getPhotoURL().equals("")) {
+                                view.setDefaultProfilePhoto();
+                            } else if (new File(sub).isFile()) {
+                                view.setProfilePhotoURL(profile.getPhotoURL());
+                            } else {
+                                provideUrl();
+                            }
+                            realm.beginTransaction();
+                            realm.copyToRealm(profile);
+                            realm.commitTransaction();
+
                         }
-                        else if(new File(sub).isFile())
-                        {
-                            view.setProfilePhotoURL(profile.getPhotoURL());}
-                        else
-                        {
-                            provideUrl();
+
+                        @Override
+                        public void onError(Throwable e) {
+                            view.makeToast(e.getMessage());
+                            view.startLoginActivity();
                         }
-                    }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        view.makeToast(e.getMessage());
-                        view.startLoginActivity();
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        view.startLoginActivity();
-                    }
-                })
-        );
+                        @Override
+                        public void onComplete() {
+                            view.startLoginActivity();
+                        }
+                    })
+            );
+        }
 
     }
     private void provideUrl()
@@ -173,16 +203,31 @@ public class ProfilePagePresenter implements ProfilePageContract.Presenter {
         disposable.add(database.downloadUrl(currentUser)
                                .subscribeOn(schedulerProvider.io())
                                .observeOn(schedulerProvider.ui())
-                               .subscribeWith(new DisposableSingleObserver<Uri>() {
+                               .subscribeWith(new DisposableMaybeObserver<String>() {
                                    @Override
-                                   public void onSuccess(@NonNull Uri uri) {
-                                       view.setProfilePhotoURL(uri.toString());
+                                   public void onSuccess(@NonNull String s) {
+                                       realm.beginTransaction();
+                                       Profile p = realm.where(Profile.class).equalTo("uid",currentUser.getUserId()).findAll().last();
+                                       p.setPhotoURL("file://"+s);
+                                       realm.commitTransaction();
+                                       view.setProfilePhotoURL(p.getPhotoURL());
                                    }
 
                                    @Override
                                    public void onError(@NonNull Throwable e) {
                                        view.makeToast(e.getMessage());
                                    }
+
+                                   @Override
+                                   public void onComplete() {
+
+                                   }
                                }));
     }
+    public void initializeRealm(Realm realm,RealmConfiguration realmConfiguration)
+    {
+        ProfilePagePresenter.this.realm = realm;
+        ProfilePagePresenter.this.realmConfiguration = realmConfiguration;
+    }
+
 }

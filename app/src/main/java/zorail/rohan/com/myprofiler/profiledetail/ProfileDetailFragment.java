@@ -14,6 +14,8 @@ import android.widget.Toast;
 
 import javax.inject.Inject;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
@@ -29,6 +31,7 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
 
     private EditText bioInput, interestsInput;
     private ImageButton back, done;
+    Realm realm;
     @Inject
     ProfileDetailPresenter presenter;
 
@@ -46,6 +49,8 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
                 .profileDetailModule(new ProfileDetailModule(this))
                 .build()
                 .inject(this);
+        realm = Realm.getDefaultInstance();
+        presenter.initializeRealm(realm);
     }
 
     @Override
@@ -77,7 +82,6 @@ public class ProfileDetailFragment extends Fragment implements ProfileDetailCont
                     presenter.onDoneButtonClick();
                 }
             });
-
             return v;
     }
 

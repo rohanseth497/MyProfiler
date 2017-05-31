@@ -19,12 +19,9 @@ import android.widget.Toast;
 import javax.inject.Inject;
 
 
-import io.reactivex.disposables.CompositeDisposable;
 import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
-import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.createaccount.CreateAccountActivity;
-import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
 import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
 
 /**
@@ -50,7 +47,7 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
         super.onCreate(savedInstanceState);
         DaggerLoginComponent.builder()
                 .netComponent(((MyApp)getActivity().getApplication()).getComponent())
-                .loginModule(new LoginModule(this))
+                .loginModule(new LoginModule(this,getActivity().getApplicationContext()))
                 .build().inject(this);
     }
 
@@ -89,13 +86,6 @@ public class LoginAccountFragment extends Fragment implements LoginAccountContra
         emailInput.requestFocus();
         return v;
     }
-
-//    @Override
-//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-//        super.onActivityCreated(savedInstanceState);
-//        if(presenter==null)
-//            presenter = new LoginAccountPresenter(view,FireBaseAuthService.getInstance(),SchedulerProvider.getInstance());
-//    }
 
     public void setUpListeners() {
         emailInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {

@@ -1,16 +1,23 @@
 package zorail.rohan.com.myprofiler.data.database;
 
+
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
+
 /**
  * Created by Ryan on 04/03/2017.
  */
 
-public class Profile {
+public class Profile extends RealmObject{
     private String bio;
     private String interests;
+    @PrimaryKey
     private String uid;
     private String email;
     private String photoURL;
     private String name;
+
+    public Profile(){}
 
     public Profile(String bio, String interests, String uid, String email, String photoURL, String name) {
         this.bio = bio;
@@ -20,11 +27,6 @@ public class Profile {
         this.photoURL = photoURL;
         this.name = name;
     }
-
-    public Profile() {
-        //for firebase
-    }
-
 
     public void setUid(String uid) {
         this.uid = uid;

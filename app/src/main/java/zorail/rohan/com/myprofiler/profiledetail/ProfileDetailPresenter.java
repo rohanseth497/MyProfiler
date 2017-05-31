@@ -5,6 +5,8 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.AuthSource;
@@ -18,16 +20,15 @@ import zorail.rohan.com.myprofiler.data.database.Profile;
 
 public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
 
-    private AuthSource auth;
     private DataBaseSource database;
     private ProfileDetailContract.View view;
     private CompositeDisposable disposable;
     private SchedulerProvider schedulerProvider;
     private Profile currentProfile;
+    Realm realm;
     @Inject
-    public ProfileDetailPresenter(AuthSource auth,DataBaseSource database,ProfileDetailContract.View view,SchedulerProvider schedulerProvider){
+    public ProfileDetailPresenter(DataBaseSource database,ProfileDetailContract.View view,SchedulerProvider schedulerProvider){
 
-        this.auth = auth;
         this.database = database;
         this.view = view;
         this.schedulerProvider = schedulerProvider;
@@ -37,7 +38,7 @@ public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
 
     @Override
     public void subscribe() {
-        getActiveUser();
+        setTexts();
     }
 
     @Override
@@ -52,10 +53,8 @@ public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
 
     @Override
     public void onDoneButtonClick() {
-
         currentProfile.setBio(view.getBio());
         currentProfile.setInterests(view.getInterests());
-
         disposable.add(
                 database.updateProfile(currentProfile)
                         .subscribeOn(schedulerProvider.io())
@@ -63,6 +62,9 @@ public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
                         .subscribeWith(new DisposableCompletableObserver() {
                             @Override
                             public void onComplete() {
+                                realm.beginTransaction();
+                                realm.copyToRealmOrUpdate(currentProfile);
+                                realm.commitTransaction();
                                 view.startProfilePageActivity();
                             }
 
@@ -73,54 +75,21 @@ public class ProfileDetailPresenter implements ProfileDetailContract.Presenter {
                         })
         );
     }
-    private void getActiveUser(){
-        disposable.add(auth.getUser()
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<User>() {
-                    @Override
-                    public void onSuccess(User user) {
-                        getUserProfile(user.getUserId());
-                    }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        view.makeToast(R.string.error_no_data_found);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        view.startProfilePageActivity();
-                    }
-                })
-
-        );
+    public void initializeRealm(Realm realm)
+    {
+        ProfileDetailPresenter.this.realm = realm;
     }
+    private void setTexts()
+    {
+        if(!realm.isEmpty())
+        {
+            Profile profile = realm.where(Profile.class).findAll().last();
+            ProfileDetailPresenter.this.currentProfile = realm.copyFromRealm(profile);
+            view.setBioText(profile.getBio());
+            view.setInterestsText(profile.getInterests());
 
-    private void getUserProfile(String uid) {
-        disposable.add(database.getProfile(uid)
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<Profile>() {
-                    @Override
-                    public void onSuccess(Profile profile) {
-                        ProfileDetailPresenter.this.currentProfile = profile;
-                        view.setBioText(profile.getBio());
-                        view.setInterestsText(profile.getInterests());
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        view.makeToast(R.string.error_no_data_found);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        view.startProfilePageActivity();
-                    }
-                })
-
-        );
+        }
     }
 
 }

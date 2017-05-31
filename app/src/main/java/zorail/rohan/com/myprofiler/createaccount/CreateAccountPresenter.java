@@ -1,14 +1,20 @@
 package zorail.rohan.com.myprofiler.createaccount;
 
 
+import android.content.Context;
+import android.util.Log;
+
 import javax.inject.Inject;
 
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
+import io.realm.Realm;
+import io.realm.RealmResults;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
+import zorail.rohan.com.myprofiler.Util.SessionManager;
 import zorail.rohan.com.myprofiler.data.AuthSource;
 import zorail.rohan.com.myprofiler.data.Credentials;
 import zorail.rohan.com.myprofiler.data.User;
@@ -24,32 +30,40 @@ public class CreateAccountPresenter implements CreateAccountContract.Presenter {
     CreateAccountContract.View view;
     CompositeDisposable disposable;
     AuthSource auth;
+    User currentUser;
     SchedulerProvider schedulerProvider;
     DataBaseSource database;
+    SessionManager sessionManager;
+    Realm realm;
+
     @Inject
-    public CreateAccountPresenter(CreateAccountContract.View view,DataBaseSource database,AuthSource auth,SchedulerProvider schedulerProvider,CompositeDisposable disposable)
+    public CreateAccountPresenter(CreateAccountContract.View view, DataBaseSource database, AuthSource auth, SchedulerProvider schedulerProvider, CompositeDisposable disposable, Context context)
     {
         this.schedulerProvider = schedulerProvider;
         this.auth = auth;
         this.view = view;
         this.database = database;
         this.disposable = disposable;
+        sessionManager = new SessionManager(context);
         view.setPresenter(this);
     }
 
     @Override
     public void onCreateAccountClick() {
 
-        if(validateAccountCredentials(view.getName(),view.getEmail(),view.getPassword(),view.getPasswordConfirmation()))
-            attemptAccountCreation(new Credentials(view.getPassword(),view.getName(),view.getEmail()));
+        if(validateAccountCredentials(view.getName(),view.getEmail(),view.getPassword(),view.getPasswordConfirmation())) {
+          attemptAccountCreation(new Credentials(view.getPassword(), view.getName(), view.getEmail()));
+        }
     }
 
     @Override
     public void subscribe() {
+
     }
 
     @Override
     public void unsubscribe() {
+        realm.close();
         disposable.clear();
     }
     public boolean validateAccountCredentials(String name, String email,
@@ -79,76 +93,58 @@ public class CreateAccountPresenter implements CreateAccountContract.Presenter {
             return true;
         }
     }
-    private void attemptAccountCreation(Credentials cred) {
+    private void attemptAccountCreation(final Credentials cred) {
 
-            view.showProgressIndicator(true);
-            disposable.add(
-                    auth.createAccount(cred)
-                            .subscribeOn(schedulerProvider.io())
-                            .observeOn(schedulerProvider.ui())
-                            .subscribeWith(new DisposableCompletableObserver() {
-                                @Override
-                                public void onComplete() {
-                                    getUser();
-                                }
+           view.showProgressIndicator(true);
+          disposable.add(auth.createAndGet(cred)
+          .subscribeOn(schedulerProvider.io())
+          .observeOn(schedulerProvider.ui())
+          .subscribeWith(new DisposableMaybeObserver<User>(){
+              @Override
+              public void onSuccess(@NonNull User user) {
+                  sessionManager.setLogin(true);
+                 CreateAccountPresenter.this.currentUser = user;
+                  addUserProfileToDatabase();
+              }
 
-                                @Override
-                                public void onError(@NonNull Throwable e) {
+              @Override
+              public void onError(@NonNull Throwable e) {
+                  view.showProgressIndicator(false);
+                  view.makeToast(e.getMessage());
+              }
 
-                                    view.showProgressIndicator(false);
-                                }
-                            })
-            );
+              @Override
+              public void onComplete() {
+                  view.showProgressIndicator(false);
+              }
+          })
+          );
     }
-    public void getUser() {
-        disposable.add(auth.getUser()
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<User>() {
-                    @Override
-                    public void onComplete() {
-                        //TODO handle this as an issue
-                        view.showProgressIndicator(false);
-                    }
-
-                    @Override
-                    public void onSuccess(User user) {
-
-                        addUserProfileToDatabase(user.getEmail(), user.getUserId());
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        view.showProgressIndicator(false);
-                        view.makeToast(e.getMessage());
-                    }
-                })
-
-        );
-    }
-    private void addUserProfileToDatabase(String email, String uid) {
-        final Profile profile = new Profile(
-                "",
-                "",
-                uid,
-                email,
-                "",
-                view.getName());
-
-                 disposable.add(database.createProfile(profile)
+    private void addUserProfileToDatabase() {
+        final Profile profile = new Profile("","",currentUser.getUserId(),currentUser.getEmail(),"",view.getName());
+        disposable.add(database.createProfile(profile)
                 .subscribeOn(schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribeWith(new DisposableCompletableObserver() {
                     @Override
                     public void onComplete() {
+                        realm.beginTransaction();
+                        realm.copyToRealm(profile);
+                        realm.commitTransaction();
+                        view.showProgressIndicator(false);
                         view.startProfilePageActivity();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         view.makeToast(e.getMessage());
+                        view.showProgressIndicator(false);
                     }
                 })
         );
+    }
+    public void initializeRealm(Realm realm)
+    {
+        CreateAccountPresenter.this.realm  =realm;
     }
 }

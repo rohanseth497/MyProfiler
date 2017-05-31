@@ -1,5 +1,6 @@
 package zorail.rohan.com.myprofiler.di;
 
+
 import javax.inject.Singleton;
 
 import dagger.Module;

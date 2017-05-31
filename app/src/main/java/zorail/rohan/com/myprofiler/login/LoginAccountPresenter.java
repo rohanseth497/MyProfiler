@@ -1,12 +1,15 @@
 package zorail.rohan.com.myprofiler.login;
 
 
+import android.content.Context;
+
 import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
+import zorail.rohan.com.myprofiler.Util.SessionManager;
 import zorail.rohan.com.myprofiler.data.AuthSource;
 import zorail.rohan.com.myprofiler.data.Credentials;
 
@@ -20,12 +23,14 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
     CompositeDisposable disposable;
     AuthSource auth;
     SchedulerProvider schedulerProvider;
+    SessionManager sessionManager ;
     @Inject
-    public LoginAccountPresenter(LoginAccountContract.View view,AuthSource auth,SchedulerProvider schedulerProvider,CompositeDisposable disposable){
+    public LoginAccountPresenter(LoginAccountContract.View view, AuthSource auth, SchedulerProvider schedulerProvider, CompositeDisposable disposable, Context context){
         this.view = view;
         this.schedulerProvider = schedulerProvider;
         this.auth = auth;
         this.disposable = disposable;
+        sessionManager = new SessionManager(context);
         view.setPresenter(this);
     }
     @Override
@@ -34,7 +39,8 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
     }
 
     @Override
-    public void unsubscribe() {
+    public void unsubscribe()
+    {
         disposable.clear();
     }
 
@@ -72,6 +78,7 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
                         .subscribeWith(new DisposableCompletableObserver() {
                             @Override
                             public void onComplete() {
+                                sessionManager.setLogin(true);
                                 view.startProfileActivity();
                                 view.showProgressIndicator(false);
                             }
@@ -83,5 +90,5 @@ public class LoginAccountPresenter implements LoginAccountContract.Presenter {
                             }
                         })
         );
-}
+    }
 }

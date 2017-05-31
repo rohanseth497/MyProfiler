@@ -1,17 +1,12 @@
 package zorail.rohan.com.myprofiler.photogallery;
 
-import android.Manifest;
-import android.app.FragmentManager;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
 
+import android.app.FragmentManager;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import zorail.rohan.com.myprofiler.ActivityUtils;
 import zorail.rohan.com.myprofiler.R;
-import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
+
 
 /**
  * Created by zorail on 17-May-17.
@@ -29,33 +24,34 @@ public class PhotoGalleryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_photo_gallery);
 
         manager = this.getFragmentManager();
+        setUpPhotoGalleryComponent();
 
-        ActivityCompat.requestPermissions(PhotoGalleryActivity.this,
-                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                1);
+//        ActivityCompat.requestPermissions(PhotoGalleryActivity.this,
+//                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+//                1);
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setUpPhotoGalleryComponent();
-                } else {
-                    Toast.makeText(this,
-                            R.string.error_permission_denied,
-                            Toast.LENGTH_SHORT).show();
-                    Intent i = new Intent(this, ProfilePageActivity.class);
-                    startActivity(i);
-                }
-                return;
-            }
-        }
-    }
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode,
+//                                           String permissions[], int[] grantResults) {
+//        switch (requestCode) {
+//            case 1: {
+//
+//                if (grantResults.length > 0
+//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                    setUpPhotoGalleryComponent();
+//                } else {
+//                    Toast.makeText(this,
+//                            R.string.error_permission_denied,
+//                            Toast.LENGTH_SHORT).show();
+//                    Intent i = new Intent(this, ProfilePageActivity.class);
+//                    startActivity(i);
+//                }
+//                return;
+//            }
+//        }
+//    }
 
     public void setUpPhotoGalleryComponent (){
         PhotoGalleryFragment fragment = (PhotoGalleryFragment)

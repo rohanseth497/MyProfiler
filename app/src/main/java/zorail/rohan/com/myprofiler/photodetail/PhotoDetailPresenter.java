@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableMaybeObserver;
+import io.realm.Realm;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.AuthSource;
@@ -24,6 +25,7 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
     private DataBaseSource database;
     private CompositeDisposable disposable;
     private Profile currentProfile;
+    Realm realm;
     @Inject
     public PhotoDetailPresenter(AuthSource auth, DataBaseSource database, PhotoDetailContract.View view, SchedulerProvider schedulerProvider,CompositeDisposable disposable)
     {
@@ -36,7 +38,7 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
     }
     @Override
     public void subscribe() {
-        getCurrentUser();
+        getUserFromRealm();
     }
 
     @Override
@@ -80,6 +82,9 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
                 .subscribeWith(new DisposableCompletableObserver() {
                     @Override
                     public void onComplete() {
+                        realm.beginTransaction();
+                        realm.copyToRealmOrUpdate(currentProfile);
+                        realm.commitTransaction();
                         view.startProfilePageActivity();
                     }
 
@@ -103,56 +108,15 @@ public class PhotoDetailPresenter implements PhotoDetailContract.Presenter {
         view.makeToast(R.string.error_loading_image);
         view.startPhotoGalleryActivity();
     }
-    private void getCurrentProfile(String uid) {
-        disposable.add(database.getProfile(uid)
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<Profile>() {
-                    @Override
-                    public void onComplete() {
-                        view.startProfilePageActivity();
-                    }
-
-                    @Override
-                    public void onSuccess(Profile profile) {
-                        PhotoDetailPresenter.this.currentProfile = profile;
-                        view.setBitmap();
-                        view.showProgressIndicator(true);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        view.showProgressIndicator(false);
-                        view.makeToast(e.getMessage());
-                    }
-
-                })
-
-        );
+    public void initializeRealm(Realm realm)
+    {
+        PhotoDetailPresenter.this.realm = realm;
     }
-    private void getCurrentUser() {
+    private void getUserFromRealm()
+    {
+      Profile p = realm.where(Profile.class).findAll().last();
+        currentProfile = realm.copyFromRealm(p);
+        view.setBitmap();
         view.showProgressIndicator(true);
-        disposable.add(auth.getUser()
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribeWith(new DisposableMaybeObserver<User>() {
-                    @Override
-                    public void onComplete() {
-                        view.startPhotoGalleryActivity();
-                    }
-
-                    @Override
-                    public void onSuccess(User user) {
-                        getCurrentProfile(user.getUserId());
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        view.startPhotoGalleryActivity();
-                        view.makeToast(e.getMessage());
-                    }
-                })
-
-        );
     }
 }

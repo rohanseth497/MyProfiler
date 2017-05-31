@@ -1,6 +1,8 @@
 package zorail.rohan.com.myprofiler.login;
 
 
+import android.content.Context;
+
 import dagger.Module;
 import dagger.Provides;
 import zorail.rohan.com.myprofiler.di.UserScope;
@@ -11,9 +13,11 @@ import zorail.rohan.com.myprofiler.di.UserScope;
 @Module
 public class LoginModule {
     LoginAccountContract.View view;
+    Context context;
 
-    public LoginModule(LoginAccountContract.View view)
+    public LoginModule(LoginAccountContract.View view,Context context)
     {
+        this.context = context;
         this.view = view;
     }
     @Provides
@@ -23,4 +27,10 @@ public class LoginModule {
         return view;
     }
 
+    @Provides
+    @UserScope
+    Context provideContext()
+    {
+        return context;
+    }
 }

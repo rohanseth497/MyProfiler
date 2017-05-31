@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +19,16 @@ import android.widget.Toast;
 
 import javax.inject.Inject;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.RealmResults;
 import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
 import zorail.rohan.com.myprofiler.data.FireBaseAuthService;
+import zorail.rohan.com.myprofiler.data.User;
 import zorail.rohan.com.myprofiler.data.database.FirebaseDatabaseService;
+import zorail.rohan.com.myprofiler.data.database.Profile;
 import zorail.rohan.com.myprofiler.login.LoginAccountActivity;
 import zorail.rohan.com.myprofiler.profilepage.ProfilePageActivity;
 
@@ -37,6 +43,8 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
     private EditText emailInput, passwordInput, confirmInput, nameInput;
     private ProgressBar progressBar;
     private View contentContainer;
+    Realm realm;
+
 
     @Inject
     CreateAccountPresenter presenter;
@@ -49,8 +57,10 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
         super.onCreate(savedInstanceState);
         DaggerCreateAccountComponent.builder()
                 .netComponent(((MyApp)getActivity().getApplication()).getComponent())
-                .createAccountModule(new CreateAccountModule(this))
+                .createAccountModule(new CreateAccountModule(this,getActivity().getApplicationContext()))
                 .build().inject(this);
+        realm = Realm.getDefaultInstance();
+        presenter.initializeRealm(realm);
     }
 
     @Nullable
@@ -88,13 +98,6 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
         return new CreateAccountFragment();
     }
 
-//    @Override
-//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-//        super.onActivityCreated(savedInstanceState);
-//        if(presenter==null)
-//            presenter = new CreateAccountPresenter(this, FirebaseDatabaseService.getInstance(),FireBaseAuthService.getInstance(), SchedulerProvider.getInstance());
-//    }
-
     @Override
     public void makeToast(String message) {
         Toast.makeText(getActivity().getApplicationContext(), message, Toast.LENGTH_SHORT).show();
@@ -102,8 +105,8 @@ public class CreateAccountFragment extends Fragment implements CreateAccountCont
 
     @Override
     public void makeToast(@StringRes int stringId) {
-
-        Toast.makeText(getActivity().getApplicationContext(), getString(stringId), Toast.LENGTH_SHORT).show();    }
+        Toast.makeText(getActivity().getApplicationContext(), getString(stringId), Toast.LENGTH_SHORT).show();
+    }
 
     @Override
     public String getEmail() {

@@ -1,7 +1,10 @@
 package zorail.rohan.com.myprofiler.profilepage;
 
+import android.content.Context;
+
 import dagger.Module;
 import dagger.Provides;
+import io.reactivex.internal.operators.completable.CompletableOnErrorComplete;
 import zorail.rohan.com.myprofiler.di.UserScope;
 
 /**
@@ -10,8 +13,10 @@ import zorail.rohan.com.myprofiler.di.UserScope;
 @Module
 public class ProfilePageModule {
     ProfilePageContract.View view;
-    public ProfilePageModule(ProfilePageContract.View view)
+    Context context;
+    public ProfilePageModule(ProfilePageContract.View view,Context context)
     {
+        this.context = context;
         this.view = view;
     }
     @UserScope
@@ -20,4 +25,11 @@ public class ProfilePageModule {
     {
         return view;
     }
+    @UserScope
+    @Provides
+    Context provideContext()
+    {
+        return context;
+    }
+
 }

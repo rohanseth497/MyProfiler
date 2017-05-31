@@ -1,7 +1,12 @@
 package zorail.rohan.com.myprofiler.data.database;
 
 
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -14,9 +19,20 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 
 import io.reactivex.Completable;
 import io.reactivex.CompletableEmitter;
@@ -47,7 +63,7 @@ public class FirebaseDatabaseService implements DataBaseSource {
     }
 
     @Override
-    public Completable createProfile(final Profile profile) {
+    public  Completable createProfile(final Profile profile) {
         return Completable.create(
                 new CompletableOnSubscribe() {
                     @Override
@@ -64,8 +80,7 @@ public class FirebaseDatabaseService implements DataBaseSource {
                                             if (task.isSuccessful()) {
                                                 e.onComplete();
                                             } else {
-                                                e.onError(task.getException());
-                                            }
+                                                e.onError(task.getException());}
                                         }
                                     });
                                 } else {
@@ -79,7 +94,9 @@ public class FirebaseDatabaseService implements DataBaseSource {
                             }
 
                         });
+                        
                     }
+
                 }
         );
     }
@@ -93,11 +110,9 @@ public class FirebaseDatabaseService implements DataBaseSource {
                         final DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
                         DatabaseReference idRef = rootRef.child(USER_PROFILES).child(uid);
                         idRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                            //does this check node for activeUser exists?
                             @Override
                             public void onDataChange(DataSnapshot snapshot) {
                                 if (snapshot.exists()) {
-                                    //setUpProfilePageComponent(
                                     Profile profile = snapshot.getValue(Profile.class);
                                     e.onSuccess(profile);
                                 } else {
@@ -191,24 +206,26 @@ public class FirebaseDatabaseService implements DataBaseSource {
     }
 
     @Override
-    public Single<Uri> downloadUrl(final User user) {
-        return Single.create(new SingleOnSubscribe<Uri>() {
+    public Maybe<String> downloadUrl(final User user) {
+        return Maybe.create(new MaybeOnSubscribe<String>() {
             @Override
-            public void subscribe(@io.reactivex.annotations.NonNull final SingleEmitter<Uri> e) throws Exception {
+            public void subscribe(@io.reactivex.annotations.NonNull final MaybeEmitter<String> e) throws Exception {
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference storageReference = storage.getReferenceFromUrl("gs://myprofiler-75995.appspot.com").child(user.getUserId());
-                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                final File localFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),user.getUserId()+".jpeg");
+                storageReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
-                    public void onSuccess(Uri uri) {
-                        e.onSuccess(uri);
+                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                        e.onSuccess(localFile.getAbsolutePath());
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
-                    public void onFailure(@NonNull Exception f) {
-                        e.onError(f);
+                    public void onFailure(@NonNull Exception exception) {
+                        e.onError(exception);
                     }
                 });
             }
+
         });
     }
 
@@ -223,5 +240,47 @@ public class FirebaseDatabaseService implements DataBaseSource {
         //only for testing purposes
 
     }
+    @Override
+    public Maybe<String> storeAndGet(final Uri uri,final String imageName)
+    {
+        return Maybe.create(new MaybeOnSubscribe<String>() {
+            @Override
+            public void subscribe(@io.reactivex.annotations.NonNull final MaybeEmitter<String> f) throws Exception {
+
+                InputStream input;
+                try {
+                    URL url = new URL (uri.toString());
+                    input = url.openStream();
+                    byte[] buffer = new byte[1500];
+                    File file = Environment.getExternalStorageDirectory();
+                    File newFile = new File(file,imageName);
+                    OutputStream output = new FileOutputStream (newFile);
+                    try
+                    {
+                        int bytesRead = 0;
+                        while ((bytesRead = input.read(buffer, 0, buffer.length)) >= 0)
+                        {
+                            output.write(buffer, 0, bytesRead);
+                        }
+                    }
+                    finally
+                    {
+                        output.close();
+                        f.onSuccess(newFile.getAbsolutePath());
+                        buffer=null;
+                    }
+                }
+                catch(Exception e) {
+                    f.onError(e);
+                }
+            }
+
+
+        });
+
+
+
+    }
+
 
 }

@@ -22,6 +22,8 @@ import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
@@ -46,6 +48,8 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
     private FloatingActionButton editDetails;
     private ImageButton settings, logout;
     private ProgressBar avatarProgress, bioProgress, interestsProgress;
+    Realm realm;
+    RealmConfiguration realmConfiguration;
 
     public ProfilePageFragment(){
     }
@@ -54,9 +58,12 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         DaggerProfilePageComponent.builder().netComponent(((MyApp)getActivity().getApplication()).getComponent())
-                .profilePageModule(new ProfilePageModule(this))
+                .profilePageModule(new ProfilePageModule(this,getActivity().getApplicationContext()))
                 .build()
                 .inject(this);
+        realm = Realm.getDefaultInstance();
+        realmConfiguration = ((MyApp)getActivity().getApplication()).getCOnfig();
+        presenter.initializeRealm(realm,realmConfiguration);
     }
 
     @Nullable
@@ -107,13 +114,6 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
         return v;
     }
 
-//    @Override
-//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-//        super.onActivityCreated(savedInstanceState);
-//        if(presenter==null)
-//            presenter = new ProfilePagePresenter(FireBaseAuthService.getInstance(),this, SchedulerProvider.getInstance(), FirebaseDatabaseService.getInstance());
-//    }
-
     public static ProfilePageFragment newInstance(){return new ProfilePageFragment();}
 
     @Override
@@ -137,7 +137,6 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
 
     @Override
     public void setName(String name) {
-
         userName.setText(name);
     }
 
@@ -167,7 +166,14 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
 
     @Override
     public void setProfilePhotoURL(String profilePhotoURL) {
-        Picasso.with(getActivity())
+        Picasso.Builder builder = new Picasso.Builder(getActivity());
+        builder.listener(new Picasso.Listener() {
+            @Override
+            public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception) {
+                makeToast(exception.getMessage());
+            }
+        });
+        builder.build()
                 .load(Uri.parse(profilePhotoURL))
                 .noFade()
                 .into(thumbnail, new Callback() {
@@ -177,7 +183,8 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
                     }
 
                     @Override
-                    public void onError() {
+                    public void onError()
+                    {
                         setDefaultProfilePhoto();
                     }
                 });
@@ -276,8 +283,8 @@ public class ProfilePageFragment extends Fragment implements ProfilePageContract
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         presenter.subscribe();
     }
 

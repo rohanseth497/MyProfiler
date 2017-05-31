@@ -18,6 +18,7 @@ import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
 
+import io.realm.Realm;
 import zorail.rohan.com.myprofiler.MyApp;
 import zorail.rohan.com.myprofiler.R;
 import zorail.rohan.com.myprofiler.Util.SchedulerProvider;
@@ -39,6 +40,7 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
     private ImageView photo;
     private ProgressBar progressBar;
     private String photoURL;
+    Realm realm;
 
     public PhotoDetailFragment()
     {
@@ -62,6 +64,8 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
         DaggerPhotoDetailComponent.builder().netComponent(((MyApp)getActivity().getApplication()).getComponent())
                 .photoDetailModule(new PhotoDetailModule(this))
                 .build().inject(this);
+        realm = Realm.getDefaultInstance();
+        presenter.initializeRealm(realm);
     }
 
     @Override
@@ -96,14 +100,6 @@ public class PhotoDetailFragment extends Fragment implements PhotoDetailContract
 
         return v;
     }
-
-//    @Override
-//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-//        super.onActivityCreated(savedInstanceState);
-//        if(presenter==null)
-//            presenter = new PhotoDetailPresenter(FireBaseAuthService.getInstance(), FirebaseDatabaseService.getInstance(),this, SchedulerProvider.getInstance());
-//        presenter.subscribe();
-//    }
 
     @Override
     public void makeToast(String message) {

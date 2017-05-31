@@ -14,6 +14,7 @@ public interface AuthSource {
     Completable attemptLogin(Credentials cred);
     Maybe<User> getUser();
     Completable logUserOut();
+    Maybe<User> createAndGet(Credentials cred);
 
     Completable deleteUser();
     Completable reauthenticateUser(String password);

@@ -1,5 +1,7 @@
 package zorail.rohan.com.myprofiler.data;
 
+import android.util.Log;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
@@ -105,6 +107,7 @@ public class FireBaseAuthService implements AuthSource {
                                             firebaseUser.getUid()
                                     );
                                     Maybe.just(user);
+                                    Log.d("TAG","Get User called");
                                     e.onSuccess(user);
                                 } else {
                                     e.onComplete();
@@ -142,6 +145,11 @@ public class FireBaseAuthService implements AuthSource {
                 auth.signOut();
             }
         });
+    }
+
+    @Override
+    public Maybe<User> createAndGet(Credentials cred) {
+        return createAccount(cred).andThen(getUser());
     }
 
     @Override
